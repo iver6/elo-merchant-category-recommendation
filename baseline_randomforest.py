@@ -23,12 +23,13 @@ def read_data(debug=True):
 
     print("read_data...")
     NROWS = 10000 if debug else None
-    train_dict = pd.read_csv("preprocess/train_dict.csv", nrows=NROWS)
-    test_dict = pd.read_csv("preprocess/test_dict.csv", nrows=NROWS)
-    train_groupby = pd.read_csv("preprocess/train_groupby.csv", nrows=NROWS)
-    test_groupby = pd.read_csv("preprocess/test_groupby.csv", nrows=NROWS)
+    train_dict = pd.read_csv("../../preprocess/train_dict.csv", nrows=NROWS)
+    test_dict = pd.read_csv("../../preprocess/test_dict.csv", nrows=NROWS)
+    train_groupby = pd.read_csv("../../preprocess/train_groupby.csv", nrows=NROWS)
+    test_groupby = pd.read_csv("../../preprocess/test_groupby.csv", nrows=NROWS)
 
     # 去除重复列
+    # dict和groupby两个数据集有重复的列
     for co in train_dict.columns:
         if co in train_groupby.columns and co!='card_id':
             del train_groupby[co]
@@ -54,6 +55,7 @@ def feature_select_pearson(train, test):
     features = train.columns.tolist()
     features.remove("card_id")
     features.remove("target")
+    features.remove("first_active_month")
     featureSelect = features[:]
 
     # 去掉缺失值比例超过0.99的
@@ -64,7 +66,8 @@ def feature_select_pearson(train, test):
     # 进行pearson相关性计算
     corr = []
     for fea in featureSelect:
-        corr.append(abs(train[[fea, 'target']].fillna(0).corr().values[0][1]))
+        tmp1 = train[[fea, 'target']].fillna(0).corr()
+        corr.append(abs(tmp1.values[0][1]))
 
     # 取top300的特征进行建模，具体数量可选
     se = pd.Series(corr, index=featureSelect).sort_values(ascending=False)
@@ -97,7 +100,7 @@ def param_grid_search(train):
         min_weight_fraction_leaf=0.,
         max_leaf_nodes=None,
         min_impurity_decrease=0.,
-        min_impurity_split=None,
+        #min_impurity_split=None,
         bootstrap=True,
         oob_score=False,
         n_jobs=4,
@@ -135,19 +138,24 @@ def train_predict(train, test, best_clf):
     prediction_train = pd.Series()
     kf = KFold(n_splits=5, random_state=2020, shuffle=True)
     for train_part_index, eval_index in kf.split(train[features], train['target']):
+        # 使用最佳参数的模型训练（分折）
         best_clf.fit(train[features].loc[train_part_index].values, train['target'].loc[train_part_index].values)
+        # 预测测试集（全集），累加预测结果
         prediction_test += best_clf.predict(test[features].values)
+        # 预测校验集
         eval_pre = best_clf.predict(train[features].loc[eval_index].values)
+        # 计算校验集分数
         score = np.sqrt(mean_squared_error(train['target'].loc[eval_index].values, eval_pre))
+
         cv_score.append(score)
         print(score)
         prediction_train = prediction_train.append(pd.Series(best_clf.predict(train[features].loc[eval_index]),
                                                              index=eval_index))
     print(cv_score, sum(cv_score) / 5)
-    pd.Series(prediction_train.sort_index().values).to_csv("preprocess/train_randomforest.csv", index=False)
-    pd.Series(prediction_test / 5).to_csv("preprocess/test_randomforest.csv", index=False)
+    pd.Series(prediction_train.sort_index().values).to_csv("../../preprocess/train_randomforest.csv", index=False)
+    pd.Series(prediction_test / 5).to_csv("../../preprocess/test_randomforest.csv", index=False)
     test['target'] = prediction_test / 5
-    test[['card_id', 'target']].to_csv("result/submission_randomforest.csv", index=False)
+    test[['card_id', 'target']].to_csv("../../result/submission_randomforest.csv", index=False)
     return
 
 

@@ -20,10 +20,10 @@ def read_data(debug=True):
     """
     print("read_data...")
     NROWS = 10000 if debug else None
-    train_dict = pd.read_csv("preprocess/train_dict.csv", nrows=NROWS)
-    test_dict = pd.read_csv("preprocess/test_dict.csv", nrows=NROWS)
-    train_groupby = pd.read_csv("preprocess/train_groupby.csv", nrows=NROWS)
-    test_groupby = pd.read_csv("preprocess/test_groupby.csv", nrows=NROWS)
+    train_dict = pd.read_csv("../../preprocess/train_dict.csv", nrows=NROWS)
+    test_dict = pd.read_csv("../../preprocess/test_dict.csv", nrows=NROWS)
+    train_groupby = pd.read_csv("../../preprocess/train_groupby.csv", nrows=NROWS)
+    test_groupby = pd.read_csv("../../preprocess/test_groupby.csv", nrows=NROWS)
 
     # 去除重复列
     for co in train_dict.columns:
@@ -73,6 +73,8 @@ def feature_select_wrapper(train, test):
     VBE = 50
     kf = KFold(n_splits=5, random_state=2020, shuffle=True)
     fse = pd.Series(0, index=features)
+    features.remove('first_active_month')
+
     for train_part_index, eval_index in kf.split(train[features], train[label]):
         # 模型训练
         train_part = lgb.Dataset(train[features].loc[train_part_index],
@@ -147,8 +149,18 @@ def param_hyperopt(train):
         space=params_space,
         algo=tpe.suggest,
         max_evals=30,
-        rstate=RandomState(2020))
+        rstate=np.random.default_rng(2020) #RandomState(2020)
+        )
     return params_best
+
+
+# 
+def splitstring():
+    '''用逗号分隔字符串'''
+
+    return
+
+
 
 
 def train_predict(train, test, params):
@@ -188,10 +200,10 @@ def train_predict(train, test, params):
         score = np.sqrt(mean_squared_error(train[label].loc[eval_index].values, eval_pre))
         cv_score.append(score)
     print(cv_score, sum(cv_score) / 5)
-    pd.Series(prediction_train.sort_index().values).to_csv("preprocess/train_lightgbm.csv", index=False)
-    pd.Series(prediction_test / 5).to_csv("preprocess/test_lightgbm.csv", index=False)
+    pd.Series(prediction_train.sort_index().values).to_csv("../../preprocess/train_lightgbm.csv", index=False)
+    pd.Series(prediction_test / 5).to_csv("../../preprocess/test_lightgbm.csv", index=False)
     test['target'] = prediction_test / 5
-    test[['card_id', 'target']].to_csv("result/submission_lightgbm.csv", index=False)
+    test[['card_id', 'target']].to_csv("../../result/submission_lightgbm.csv", index=False)
     return
 
 if __name__ == "__main__":
