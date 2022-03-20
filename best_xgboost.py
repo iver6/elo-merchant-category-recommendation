@@ -26,10 +26,10 @@ def read_data(debug=True):
     """
     print("read_data...")
     NROWS = 10000 if debug else None
-    train_dict = pd.read_csv("preprocess/train_dict.csv", nrows=NROWS)
-    test_dict = pd.read_csv("preprocess/test_dict.csv", nrows=NROWS)
-    train_groupby = pd.read_csv("preprocess/train_groupby.csv", nrows=NROWS)
-    test_groupby = pd.read_csv("preprocess/test_groupby.csv", nrows=NROWS)
+    train_dict = pd.read_csv("../../preprocess/train_dict.csv", nrows=NROWS)
+    test_dict = pd.read_csv("../../preprocess/test_dict.csv", nrows=NROWS)
+    train_groupby = pd.read_csv("../../preprocess/train_groupby.csv", nrows=NROWS)
+    test_groupby = pd.read_csv("../../preprocess/test_groupby.csv", nrows=NROWS)
 
     # 去除重复列
     for co in train_dict.columns:
@@ -45,9 +45,10 @@ def read_data(debug=True):
     features = train.columns.tolist()
     features.remove('card_id')
     features.remove('target')
+    features.remove("first_active_month")
 
-    train_x = sparse.load_npz("preprocess/train_nlp.npz")
-    test_x = sparse.load_npz("preprocess/test_nlp.npz")
+    train_x = sparse.load_npz("../../preprocess/train_nlp.npz")
+    test_x = sparse.load_npz("../../preprocess/test_nlp.npz")
 
     train_x = sparse.hstack((train_x, train[features])).tocsr()
     test_x = sparse.hstack((test_x, test[features])).tocsr()
@@ -74,7 +75,7 @@ def param_beyesian(train):
     :param train:
     :return:
     """
-    train_y = pd.read_csv("data/train.csv")['target']
+    train_y = pd.read_csv("../../data/train.csv")['target']
     sample_index = train_y.sample(frac=0.1, random_state=2020).index.tolist()
     train_data = xgb.DMatrix(train.tocsr()[sample_index, :
                              ], train_y.loc[sample_index].values, silent=True)
@@ -134,7 +135,7 @@ def train_predict(train, test, params):
     :param params:
     :return:
     """
-    train_y = pd.read_csv("data/train.csv")['target']
+    train_y = pd.read_csv("../../data/train.csv")['target']
     test_data = xgb.DMatrix(test)
 
     params = params_append(params)
@@ -160,11 +161,11 @@ def train_predict(train, test, params):
         score = np.sqrt(mean_squared_error(train_y.loc[eval_index].values, eval_pre))
         cv_score.append(score)
     print(cv_score, sum(cv_score) / 5)
-    pd.Series(prediction_train.sort_index().values).to_csv("preprocess/train_xgboost.csv", index=False)
-    pd.Series(prediction_test / 5).to_csv("preprocess/test_xgboost.csv", index=False)
-    test = pd.read_csv('data/test.csv')
+    pd.Series(prediction_train.sort_index().values).to_csv("../../preprocess/train_xgboost.csv", index=False)
+    pd.Series(prediction_test / 5).to_csv("../../preprocess/test_xgboost.csv", index=False)
+    test = pd.read_csv('../../data/test.csv')
     test['target'] = prediction_test / 5
-    test[['card_id', 'target']].to_csv("result/submission_xgboost.csv", index=False)
+    test[['card_id', 'target']].to_csv("../../result/submission_xgboost.csv", index=False)
     return
 
 if __name__ == "__main__":

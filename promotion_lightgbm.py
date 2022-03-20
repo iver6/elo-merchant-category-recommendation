@@ -67,6 +67,8 @@ def feature_select_wrapper(train, test):
         'reg_alpha': 0,
         'reg_lambda': 1,
         'objective': 'regression'
+        #'feature_pre_filter': False,
+        #'min_data_in_leaf':20
     }
     ESR = 30
     NBR = 10000
@@ -101,6 +103,7 @@ def params_append(params):
     params['objective'] = 'regression'
     params['metric'] = 'rmse'
     params['bagging_seed'] = 2020
+    params['feature_pre_filter'] = False
     return params
 
 
