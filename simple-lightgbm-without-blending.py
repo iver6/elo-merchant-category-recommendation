@@ -92,8 +92,8 @@ def reduce_mem_usage(df, verbose=True):
 def train_test(num_rows=None):
 
     # load csv
-    train_df = pd.read_csv('data/train.csv', index_col=['card_id'], nrows=num_rows)
-    test_df = pd.read_csv('data/test.csv', index_col=['card_id'], nrows=num_rows)
+    train_df = pd.read_csv('../../data/train.csv', index_col=['card_id'], nrows=num_rows)
+    test_df = pd.read_csv('../../data/test.csv', index_col=['card_id'], nrows=num_rows)
 
     print("Train samples: {}, test samples: {}".format(len(train_df), len(test_df)))
 
@@ -143,7 +143,7 @@ def train_test(num_rows=None):
 # preprocessing historical transactions
 def historical_transactions(num_rows=None):
     # load csv
-    hist_df = pd.read_csv('data/historical_transactions.csv', nrows=num_rows)
+    hist_df = pd.read_csv('../../data/historical_transactions.csv', nrows=num_rows)
 
     # fillna
     hist_df['category_2'].fillna(1.0,inplace=True)
@@ -259,7 +259,7 @@ def historical_transactions(num_rows=None):
 # preprocessing new_merchant_transactions
 def new_merchant_transactions(num_rows=None):
     # load csv
-    new_merchant_df = pd.read_csv('data/new_merchant_transactions.csv', nrows=num_rows)
+    new_merchant_df = pd.read_csv('../../data/new_merchant_transactions.csv', nrows=num_rows)
 
     # fillna
     new_merchant_df['category_2'].fillna(1.0,inplace=True)
@@ -417,8 +417,8 @@ def kfold_lightgbm(train_df, test_df, num_folds, stratified = False, debug= Fals
     else:
         folds = KFold(n_splits= num_folds, shuffle=True, random_state=326)
 
-    train_df['xgboost'] = pd.read_csv("preprocess/train_xgboost.csv", header=None)[0].values
-    test_df['xgboost'] = pd.read_csv("preprocess/test_xgboost.csv", header=None)[0].values
+    train_df['xgboost'] = pd.read_csv("../../preprocess/train_xgboost.csv", header=0).values
+    test_df['xgboost'] = pd.read_csv("../../preprocess/test_xgboost.csv", header=0).values
 
     # Create arrays and dataframes to store results
     oof_preds = np.zeros(train_df.shape[0])
@@ -513,6 +513,6 @@ def main(debug=False):
         kfold_lightgbm(train_df, test_df, num_folds=11, stratified=False, debug=debug)
 
 if __name__ == "__main__":
-    submission_file_name = "result/submission_stack_all.csv"
+    submission_file_name = "../../result/submission_stack_all.csv"
     with timer("Full model run"):
         main(debug=False)
